@@ -1,0 +1,122 @@
+/* ON FOOD — design tokens
+ * Derived from brand/logo/README.txt (brand kit).
+ *
+ * Note on green: Forest Green is the brand colour AND green conventionally means
+ * "success" in dashboards. Keep them distinct — brand green is chrome, leaf green
+ * is semantic success. Warning and danger sit outside the brand palette on purpose.
+ */
+
+:root {
+  /* --- Brand ------------------------------------------------------------ */
+  --onfood-forest: #1B4D2E;
+  --onfood-leaf: #7CB342;
+  --onfood-offwhite: #FAF9F5;
+  --onfood-brown: #5D3A1A;
+
+  /* --- Forest tints (navigation, chrome, hover states) ------------------- */
+  --forest-900: #0E2A18;
+  --forest-800: #143B23;
+  --forest-700: #1B4D2E; /* base */
+  --forest-600: #26663D;
+  --forest-500: #33804E;
+  --forest-300: #7FAE92;
+  --forest-100: #D6E4DC;
+
+  /* --- Leaf tints ------------------------------------------------------- */
+  --leaf-700: #4F7A24;
+  --leaf-600: #669634;
+  --leaf-500: #7CB342; /* base */
+  --leaf-300: #A8CE81;
+  --leaf-100: #E4F0D5;
+
+  /* --- Neutrals --------------------------------------------------------- */
+  --neutral-0: #FFFFFF;
+  --neutral-50: #FAF9F5; /* off white, app background */
+  --neutral-100: #F1EFE8;
+  --neutral-200: #E3E0D6;
+  --neutral-300: #C9C5B8;
+  --neutral-500: #8A8578;
+  --neutral-700: #4D4A42;
+  --neutral-900: #21201C;
+
+  /* --- Semantic (deliberately not the brand greens for warn/danger) ------ */
+  --semantic-success: var(--leaf-500);
+  --semantic-success-bg: var(--leaf-100);
+  --semantic-warning: #C8811B;
+  --semantic-warning-bg: #FBEEDA;
+  --semantic-danger: #B3261E;
+  --semantic-danger-bg: #FBE4E2;
+  --semantic-info: #2A6F97;
+  --semantic-info-bg: #E0EDF4;
+
+  /* Food-domain states — expiry is a first-class concept in this ERP */
+  --state-expired: var(--semantic-danger);
+  --state-near-expiry: var(--semantic-warning);
+  --state-fresh: var(--semantic-success);
+
+  /* --- Surfaces --------------------------------------------------------- */
+  --surface-app: var(--neutral-50);
+  --surface-card: var(--neutral-0);
+  --surface-sunken: var(--neutral-100);
+  --border-subtle: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-700);
+  --text-muted: var(--neutral-500);
+  --text-on-brand: var(--neutral-0);
+
+  /* --- Typography ------------------------------------------------------- */
+  /* EB Garamond is a DISPLAY face: wordmark and marketing only.
+     Never set operational data in it. */
+  --font-display: 'EB Garamond', Garamond, 'Times New Roman', serif;
+  --font-ui: Lato, 'Helvetica Neue', Arial, sans-serif;
+  /* Tabular figures matter — stock and money columns must align vertically */
+  --font-numeric: 'Lato', ui-monospace, monospace;
+  --font-feature-numeric: 'tnum' 1, 'lnum' 1;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+
+  /* --- Spacing (4px base) ----------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(27, 77, 46, 0.06);
+  --shadow-md: 0 2px 8px rgba(27, 77, 46, 0.10);
+}
+
+/* Kitchen Display System — read from ~2 metres, high contrast, large type.
+   Uses the reversed logo lockups. */
+[data-surface="kds"] {
+  --surface-app: var(--forest-900);
+  --surface-card: var(--forest-800);
+  --border-subtle: var(--forest-600);
+  --text-primary: var(--neutral-0);
+  --text-secondary: var(--forest-100);
+  --text-muted: var(--forest-300);
+  --text-base: 1.25rem;
+  --text-lg: 1.5rem;
+  --text-xl: 2rem;
+  --text-2xl: 2.75rem;
+}
+
+/* Numeric columns in stock/finance tables */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--font-feature-numeric);
+  text-align: right;
+}

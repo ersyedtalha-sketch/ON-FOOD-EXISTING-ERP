@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 82" width="1600" height="353" role="img" aria-label="ON FOOD — Fresh, Healthy, Delicious">
+  <defs></defs>
+  <g transform="translate(4 14) scale(2.33)">
+  <path d="M12.6 12.5 C12.2 9 12.6 6.4 14.2 4.2" fill="none" stroke="#7CB342" stroke-width="1.1" stroke-linecap="round"></path>
+  <path d="M13.2 8.6 C13 4.2 15.6 1.4 20.4 0.8 C20.6 5.2 17.8 8.2 13.2 8.6 Z" fill="#7CB342"></path>
+  <path d="M11.4 10.6 C8 8.2 5 8.2 2.6 9.4 C4.6 12.4 8.4 12.9 11.4 10.6 Z" fill="#1B4D2E"></path>
+  </g>
+  <text class="wm" font-family="&#39;EB Garamond&#39;, Garamond, &#39;Times New Roman&#39;, serif" font-weight="700" x="76" y="52" font-size="54" letter-spacing="4.3" fill="#1B4D2E">ON FOOD</text>
+  <text class="tl" font-family="Lato, &#39;Helvetica Neue&#39;, Arial, sans-serif" font-weight="700" x="78" y="75" font-size="11" letter-spacing="1.98" fill="#1B4D2E">FRESH, HEALTHY, DELICIOUS</text>
+</svg>
