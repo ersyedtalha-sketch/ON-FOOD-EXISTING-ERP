@@ -9,6 +9,7 @@ run twice.
 | 2 | `profiles-and-roles.sql` *(existing)* | Logins and the `admin` / `supervisor` roles |
 | 3 | `02-orders-and-sales.sql` | Enquiries, orders, B2B customer fields, the `salesperson` role, and the access rules |
 | 4 | `03-invoice-on-delivery.sql` | Raises the tax invoice when an order is delivered, and queues it to the customer's mobile |
+| 5 | `04-batch-traceability.sql` | Expiry dates, an append-only stock ledger, FEFO picking, and the recall queries |
 
 Then set your own business details, which the invoice needs:
 
@@ -123,6 +124,60 @@ queued in `outbox` and an Edge Function drains it.
 This is also what makes failure visible. A customer with no usable mobile
 number gets an `outbox` row with status `failed` and the reason, instead
 of an invoice that silently never arrives.
+
+## Batch traceability
+
+The question this exists to answer, on the day someone asks it:
+
+```sql
+select * from batch_recall where batch_no = 'B-101';
+```
+
+→ every customer who received that batch, with their phone number, the
+order, and the invoice. The reverse view `customer_batches` answers a
+complaint about one delivery rather than one batch.
+
+### FEFO, not FIFO
+
+Stock is picked **First Expired, First Out**. These differ whenever a
+shorter-dated batch is produced after a longer-dated one — and picking by
+production order then leaves the soonest-to-expire stock on the shelf
+until it becomes waste.
+
+Expired batches are never allocated. If the only stock of a product has
+expired, the delivery fails rather than quietly selling it.
+
+### The ledger is append-only
+
+`stock_moves` holds every movement: positive in, negative out. Updates and
+deletes are blocked by a trigger. A correction is a new row in the
+opposite direction with `reason = 'adjustment'`.
+
+This is not tidiness. If stock rows can be edited, then after an incident
+you cannot prove what stock was where, and the trace is worth nothing.
+
+`batch_stock` derives what is on hand by summing the ledger, so the
+balance cannot drift away from the movements that produced it.
+
+### Delivery consumes stock
+
+Marking an order delivered allocates stock FEFO **and** raises the
+invoice, in that order. If there isn't enough stock the delivery fails
+and no invoice number is spent.
+
+That strictness is deliberate: goods leaving without a batch behind them
+is precisely the hole that makes a recall unanswerable. Record the
+production batch, then mark it delivered.
+
+### Expiring stock
+
+```sql
+select * from expiry_watch;         -- what to move today
+select write_off_expired();         -- writes off past-expiry stock, returns how many batches
+```
+
+Expired units stay on the ledger until written off, so the loss shows up
+instead of quietly disappearing.
 
 ## Verifying a change
 
