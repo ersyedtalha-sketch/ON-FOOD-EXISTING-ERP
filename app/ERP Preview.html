@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERP — Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Override: make each "frame" fill the viewport instead of being letterboxed */
+    html, body { height: 100%; background: #fafaf9; }
+    #root, .app-root { width: 100vw; min-height: 100vh; display: flex; }
+    /* Sidebar links become clickable in preview mode */
+    .pro-sidebar-link { cursor: pointer !important; }
+    .pro-sidebar-link:hover { background: var(--p-border-soft); }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <!-- Supabase client — connects this prototype to your live database -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <!-- SheetJS — for "Download report" (Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    (function () {
+      var SUPABASE_URL = 'https://yscjyxmxylyvpmiahcfc.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzY2p5eG14eWx5dnBtaWFoY2ZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMzc1MDEsImV4cCI6MjA5NTYxMzUwMX0.Avkv4YS8BW4gSFR2pGY4R-4nQMEnKD-vD6-tD_Gpxm0';
+      if (window.supabase && window.supabase.createClient) {
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase connected.');
+      } else {
+        console.warn('Supabase library failed to load — running in offline/demo mode.');
+      }
+    })();
+  </script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="proposed-store.jsx"></script>
+  <script type="text/babel" src="proposed.jsx"></script>
+  <script type="text/babel" src="proposed-costs.jsx"></script>
+  <script type="text/babel" src="proposed-invoice.jsx"></script>
+  <script type="text/babel" src="proposed-inventory.jsx"></script>
+  <script type="text/babel" src="proposed-export.jsx"></script>
+</head>
+<body>
+  <template id="__bundler_thumbnail">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <rect width="100" height="100" fill="#1f6f4a"/>
+      <rect x="30" y="30" width="40" height="40" rx="9" fill="#fff"/>
+      <text x="50" y="58" font-family="Inter, sans-serif" font-size="19" font-weight="700" fill="#1c1917" text-anchor="middle">ON</text>
+    </svg>
+  </template>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect } = React;
+
+    // Map sidebar hrefs → the rendered screen component
+    const ROUTES = {
+      '/dashboard':                ProDashboard,
+      '/dashboard/inventory':      ProInventory,
+      '/dashboard/costs':          ProCosts,
+      '/dashboard/batches':        ProBatches,
+      '/dashboard/sales':          ProSales,
+      '/dashboard/sales/new':      ProNewInvoice,
+      '/dashboard/partners':       ProPartners,
+      '/dashboard/credit':         ProCredit,
+    };
+
+    // Which routes each role may open. Supervisor = operations only.
+    const ROLE_ROUTES = {
+      admin: Object.keys(ROUTES),
+      supervisor: ['/dashboard', '/dashboard/inventory', '/dashboard/costs', '/dashboard/batches'],
+    };
+
+    const initials = (s) => (s || '?').split(/[\s@.]+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+
+    // ---------- Auth hook ----------
+    function useAuth() {
+      const sb = window.supabaseClient;
+      const [session, setSession] = useState(undefined); // undefined = still checking
+      const [profile, setProfile] = useState(null);
+
+      useEffect(() => {
+        if (!sb) { setSession(null); return; }
+        sb.auth.getSession().then(({ data }) => setSession(data.session || null));
+        const { data: sub } = sb.auth.onAuthStateChange((_e, s) => setSession(s || null));
+        return () => sub.subscription.unsubscribe();
+      }, []);
+
+      useEffect(() => {
+        if (!sb || !session) { setProfile(null); window.__erpRole = null; window.__erpUser = null; return; }
+        sb.from('profiles').select('role, full_name, email').eq('id', session.user.id).single()
+          .then(({ data }) => {
+            const role = (data && data.role) || 'supervisor';
+            const name = (data && (data.full_name || data.email)) || session.user.email;
+            setProfile({ role, name });
+            window.__erpRole = role;
+            window.__erpUser = { name, role, inits: initials(name) };
+          });
+      }, [session]);
+
+      return { sb, session, profile };
+    }
+
+    // ---------- Login screen ----------
+    const Login = ({ sb }) => {
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [err, setErr] = useState('');
+      const [busy, setBusy] = useState(false);
+
+      const submit = async (e) => {
+        e.preventDefault();
+        setErr(''); setBusy(true);
+        const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
+        setBusy(false);
+        if (error) setErr(error.message);
+      };
+
+      return (
+        <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#fafaf9', fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <form onSubmit={submit} style={{ width: 360, background: '#fff', border: '1px solid #e7e5e4', borderRadius: 12, padding: 32, boxShadow: '0 12px 28px rgba(28,25,23,.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 7, background: '#1c1917', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14 }}>ON</div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-.01em' }}>ON Food ERP</div>
+                <div style={{ fontSize: 12, color: '#78716c' }}>Sign in to continue</div>
+              </div>
+            </div>
+            <label style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: '#78716c' }}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus
+              style={{ width: '100%', height: 38, padding: '0 12px', margin: '6px 0 14px', border: '1px solid #e7e5e4', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }} />
+            <label style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: '#78716c' }}>Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+              style={{ width: '100%', height: 38, padding: '0 12px', margin: '6px 0 14px', border: '1px solid #e7e5e4', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }} />
+            {err && <div style={{ background: '#fef2f2', color: '#b91c1c', fontSize: 12, padding: '8px 10px', borderRadius: 6, marginBottom: 14 }}>{err}</div>}
+            <button type="submit" disabled={busy}
+              style={{ width: '100%', height: 40, background: '#1c1917', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: busy ? 'wait' : 'pointer' }}>
+              {busy ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+        </div>
+      );
+    };
+
+    const Loading = ({ label }) => (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#fafaf9', color: '#78716c', fontFamily: 'Inter, sans-serif', fontSize: 14 }}>
+        {label || 'Loading…'}
+      </div>
+    );
+
+    const App = () => {
+      const { sb, session, profile } = useAuth();
+      const [route, setRoute] = useState(() => {
+        const h = location.hash.replace('#', '');
+        return ROUTES[h] ? h : '/dashboard';
+      });
+
+      // expose sign-out for the sidebar
+      useEffect(() => { window.__erpSignOut = () => sb && sb.auth.signOut(); }, [sb]);
+
+      // Enforce role-based route access
+      const role = profile ? profile.role : 'admin';
+      useEffect(() => {
+        const allowed = ROLE_ROUTES[role] || ROLE_ROUTES.admin;
+        // /dashboard/sales/new is allowed only if sales is allowed
+        const ok = allowed.includes(route) || (route === '/dashboard/sales/new' && allowed.includes('/dashboard/sales'));
+        if (!ok) { setRoute('/dashboard'); history.replaceState(null, '', '#/dashboard'); }
+      }, [role, route]);
+
+      useEffect(() => {
+        const onClick = (e) => {
+          const link = e.target.closest('.pro-sidebar-link');
+          if (link) {
+            const text = link.textContent.trim().toLowerCase();
+            const map = {
+              'overview':      '/dashboard',
+              'inventory':     '/dashboard/inventory',
+              'products':      '/dashboard/costs',
+              'batches':       '/dashboard/batches',
+              'sales':         '/dashboard/sales',
+              'partners':      '/dashboard/partners',
+              'credit ledger': '/dashboard/credit',
+            };
+            for (const key of Object.keys(map)) {
+              if (text.startsWith(key)) {
+                e.preventDefault();
+                setRoute(map[key]);
+                history.replaceState(null, '', '#' + map[key]);
+                return;
+              }
+            }
+          }
+          const btn = e.target.closest('.pro-btn, button');
+          if (btn) {
+            const label = btn.textContent.trim().toLowerCase();
+            // "New sale" → new invoice
+            if (label.includes('new sale')) {
+              e.preventDefault();
+              setRoute('/dashboard/sales/new');
+              history.replaceState(null, '', '#/dashboard/sales/new');
+              return;
+            }
+            // Full report
+            if (label.includes('download report')) {
+              e.preventDefault();
+              if (window.ERPExport) window.ERPExport.full(window.__erpState || {});
+              return;
+            }
+            // Per-section export — based on the current screen
+            if (label === 'export') {
+              e.preventDefault();
+              const sectionByRoute = {
+                '/dashboard/inventory': 'inventory',
+                '/dashboard/batches': 'batches',
+                '/dashboard/costs': 'products',
+                '/dashboard/partners': 'partners',
+              };
+              const which = sectionByRoute[location.hash.replace('#', '')] || null;
+              if (window.ERPExport) {
+                which ? window.ERPExport.section(window.__erpState || {}, which) : window.ERPExport.full(window.__erpState || {});
+              }
+              return;
+            }
+          }
+        };
+        document.addEventListener('click', onClick);
+        return () => document.removeEventListener('click', onClick);
+      }, []);
+
+      // ---- Auth gating ----
+      if (sb) {
+        if (session === undefined) return <Loading label="Checking sign-in…" />;
+        if (session === null) return <Login sb={sb} />;
+        if (!profile) return <Loading label="Loading your account…" />;
+      }
+
+      const Screen = ROUTES[route] || ProDashboard;
+      return (
+        <AppStateProvider>
+          <div className="app-root">
+            <style>{`.pro.frame { width: 100vw; height: 100vh; }`}</style>
+            <Screen key={route} />
+          </div>
+        </AppStateProvider>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

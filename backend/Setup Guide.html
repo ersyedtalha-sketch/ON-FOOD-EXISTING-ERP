@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ON Food ERP — Backend Setup (Step 1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafaf9; --card:#fff; --fg:#1c1917; --fg2:#44403c; --muted:#78716c;
+    --soft:#a8a29e; --border:#e7e5e4; --borderSoft:#f1f0ee;
+    --accent:#1f6f4a; --accentSoft:#f0f7f3; --warn:#b45309; --warnSoft:#fef3c7;
+    --info:#1e40af; --infoSoft:#dbeafe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:'Inter',system-ui,sans-serif;line-height:1.6;}
+  .wrap{max-width:780px;margin:0 auto;padding:56px 28px 96px;}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);}
+  h1{font-size:30px;font-weight:700;letter-spacing:-.02em;margin:10px 0 6px;}
+  .lede{font-size:16px;color:var(--muted);margin:0 0 8px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--accentSoft);color:var(--accent);font-size:12px;font-weight:600;}
+  .callout{background:var(--warnSoft);border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin:24px 0;font-size:14px;color:#78350f;}
+  .callout b{color:#92400e;}
+  .step{display:flex;gap:18px;padding:24px 0;border-top:1px solid var(--border);}
+  .step:first-of-type{border-top:none;}
+  .num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--fg);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;}
+  .step h3{margin:2px 0 8px;font-size:18px;font-weight:600;letter-spacing:-.01em;}
+  .step p{margin:0 0 10px;color:var(--fg2);font-size:15px;}
+  .step ul{margin:8px 0;padding-left:20px;color:var(--fg2);font-size:15px;}
+  .step li{margin:5px 0;}
+  a{color:var(--accent);font-weight:500;}
+  code{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--borderSoft);padding:2px 6px;border-radius:5px;color:var(--fg);}
+  .filebox{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:12px 0;}
+  .filebox .ic{width:34px;height:34px;border-radius:8px;background:var(--accentSoft);color:var(--accent);display:grid;place-items:center;flex:0 0 auto;}
+  .filebox .nm{font-weight:600;font-size:14px;}
+  .filebox .ds{font-size:12px;color:var(--muted);margin-top:2px;}
+  .tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--infoSoft);color:var(--info);padding:2px 8px;border-radius:5px;}
+  .map{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:28px 0;}
+  .map h4{margin:0 0 14px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+  .row{display:flex;align-items:center;gap:10px;font-size:14px;padding:7px 0;color:var(--fg2);}
+  .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .done{color:var(--accent);} .next{color:var(--warn);} .later{color:var(--soft);}
+  .foot{margin-top:40px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:14px;}
+  .kbd{font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:#fff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">— Backend · Step 1 of the journey</div>
+  <h1>Setting up your database</h1>
+  <p class="lede">A ~10-minute, one-time setup. No coding. You copy-paste one block and click Run. This is the moment your ERP gets a permanent memory.</p>
+  <span class="pill">You do this once · then we connect screens one by one</span>
+
+  <div class="callout">
+    <b>Before we start — what this does and doesn't do.</b><br>
+    This sets up the <b>storage</b> (the database). After this, the prototype still won't auto-save yet — connecting each screen to this database is the <i>next</i> step, which we'll do together, one screen at a time. Think of today as "installing the filing cabinet" before we start filing.
+  </div>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div>
+      <h3>Create a free Supabase account</h3>
+      <p>Go to <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a> and click <b>Start your project</b>. Sign in with Google or email. It's free for what we need.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div>
+      <h3>Create a new project</h3>
+      <ul>
+        <li>Click <b>New project</b>.</li>
+        <li>Name it <code>onfood-erp</code>.</li>
+        <li>Set a <b>database password</b> — write it down somewhere safe, you'll rarely need it but don't lose it.</li>
+        <li>Choose region <b>South Asia (Mumbai)</b> — closest to Kalaburagi, so it's fast.</li>
+        <li>Click <b>Create</b> and wait ~2 minutes while it sets up.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div>
+      <h3>Create the tables (paste &amp; run)</h3>
+      <p>This is the only "technical" bit, and it's just copy-paste:</p>
+      <ul>
+        <li>In your project, open <b>SQL Editor</b> (left sidebar) → <b>New query</b>.</li>
+        <li>Open the file below, copy <b>everything</b> in it, paste into the editor.</li>
+        <li>Click <b>Run</b> (or press <span class="kbd">Ctrl/Cmd + Enter</span>).</li>
+        <li>You should see "Success". That's it — your tables now exist.</li>
+      </ul>
+      <div class="filebox">
+        <div class="ic">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        </div>
+        <div>
+          <div class="nm">backend/schema.sql</div>
+          <div class="ds">All your tables: partners, inventory, batches, invoices, invoice items, payments — with security on.</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">The file sits in this project under the <code>backend</code> folder. Open it, select all, copy.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div>
+      <h3>Turn on login</h3>
+      <p>So only you and your brother can open it. Go to <b>Authentication</b> → <b>Providers</b> → make sure <b>Email</b> is enabled. Later we can add "magic link" (login by clicking a link in your email — no password to remember).</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">5</div>
+    <div>
+      <h3>Copy your two keys (and send them to me)</h3>
+      <p>Go to <b>Project Settings</b> → <b>API</b>. You'll see:</p>
+      <ul>
+        <li><span class="tag">Project URL</span> — looks like <code>https://abcd1234.supabase.co</code></li>
+        <li><span class="tag">anon public key</span> — a long string starting with <code>eyJ…</code></li>
+      </ul>
+      <p>These two are safe to use in the app. Paste them to me and I'll wire the first screen (Inventory) to read and write from your real database.</p>
+      <div class="callout" style="background:var(--infoSoft);border-color:#bfdbfe;color:#1e3a8a">
+        <b>Never share</b> the <code>service_role</code> key or your database password with anyone. We only ever need the <b>URL</b> and the <b>anon</b> key.
+      </div>
+    </div>
+  </div>
+
+  <div class="map">
+    <h4>Where this fits in the whole journey</h4>
+    <div class="row"><span class="dot" style="background:var(--accent)"></span><span class="done">✓ Prototype built — all screens working as a demo</span></div>
+    <div class="row"><span class="dot" style="background:var(--warn)"></span><span class="next"><b>→ You are here: create the database (Step 1)</b></span></div>
+    <div class="row"><span class="dot" style="background:var(--soft)"></span><span class="later">Connect Inventory screen to save &amp; load real data</span></div>
+    <div class="row"><span class="dot" style="background:var(--soft)"></span><span class="later">Connect Batches, Products, Partners, Invoices — one at a time</span></div>
+    <div class="row"><span class="dot" style="background:var(--soft)"></span><span class="later">Add login &amp; staff roles</span></div>
+    <div class="row"><span class="dot" style="background:var(--soft)"></span><span class="later">Put it on a web address you open from any device</span></div>
+  </div>
+
+  <div class="foot">
+    Stuck on any step? Tell me where you are and I'll walk you through it. When you have the <b>Project URL</b> and <b>anon key</b>, send them over and we'll make the first screen save for real.
+  </div>
+
+</div>
+</body>
+</html>

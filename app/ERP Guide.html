@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ON Food ERP — Team Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3eee4; --paper-soft: #f7f3eb; --paper-deep: #e9e2d2;
+    --ink: #1a1a14; --ink-2: #2b2a26; --body: #5e5a4e; --body-soft: #8a857a;
+    --forest: #364423; --forest-deep: #2a3618; --rust: #b86a3a;
+    --pc-wheat: #e0c896; --pc-pickle: #7d2a1e; --pc-makhana: #8a6d44; --pc-chilli: #791f15;
+    --display: 'Playfair Display', Georgia, serif;
+    --body-font: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #cfc8b8; }
+  body { font-family: var(--body-font); color: var(--ink-2); line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* A4 page */
+  .page {
+    width: 210mm; min-height: 297mm;
+    margin: 14px auto; padding: 22mm 20mm;
+    background: var(--paper);
+    box-shadow: 0 6px 24px rgba(0,0,0,.18);
+    position: relative;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .eyebrow {
+    font-size: 11.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--rust); margin: 0 0 14px;
+  }
+  .eyebrow::before { content: "— "; }
+
+  h1 { font-family: var(--display); font-weight: 400; font-size: 46px; line-height: 1.08; letter-spacing: -.01em; color: var(--ink); margin: 0 0 18px; }
+  h2 { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1.15; color: var(--ink); margin: 0 0 12px; }
+  h3 { font-family: var(--display); font-weight: 500; font-size: 20px; color: var(--ink); margin: 0 0 6px; }
+  em, .it { font-style: italic; color: var(--forest); }
+  p { margin: 0 0 12px; color: var(--body); font-size: 14.5px; }
+  strong { color: var(--ink-2); font-weight: 600; }
+  .lead { font-size: 16px; color: var(--ink-2); }
+
+  .divider { height: 1px; background: var(--paper-deep); border: 0; margin: 22px 0; }
+
+  /* cover */
+  .cover { display: flex; flex-direction: column; min-height: 253mm; }
+  .cover-top { display: flex; align-items: center; gap: 14px; }
+  .mark { width: 46px; height: 46px; border-radius: 10px; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-family: var(--display); font-weight: 600; font-size: 20px; }
+  .cover-mid { margin-top: auto; margin-bottom: auto; }
+  .cover h1 { font-size: 60px; margin-bottom: 8px; }
+  .cover .sub { font-size: 19px; color: var(--body); max-width: 60ch; }
+  .cover-foot { font-size: 12.5px; color: var(--body-soft); border-top: 1px solid var(--paper-deep); padding-top: 14px; }
+  .cover-foot strong { color: var(--ink-2); }
+
+  /* numbered section header */
+  .sec-no { font-family: var(--display); font-style: italic; font-size: 18px; color: var(--rust); }
+
+  /* flow steps */
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 18px 0; }
+  .flow-step { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--paper-deep); }
+  .flow-step:last-child { border-bottom: 0; }
+  .flow-badge { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; background: var(--forest); color: var(--paper); display: grid; place-items: center; font-weight: 600; font-size: 14px; }
+  .flow-body h3 { margin-bottom: 3px; }
+  .flow-body p { margin: 0; font-size: 13.5px; }
+  .flow-arrow { color: var(--pc-makhana); font-size: 13px; margin-left: 46px; }
+
+  /* cards */
+  .card { background: var(--paper-soft); border: 1px solid var(--paper-deep); border-radius: 8px; padding: 18px 20px; margin: 0 0 14px; }
+  .card.dark { background: var(--forest); border-color: var(--forest); }
+  .card.dark, .card.dark p, .card.dark h3 { color: var(--paper); }
+  .card.dark .eyebrow { color: var(--pc-wheat); }
+
+  /* steps list */
+  ol.steps { margin: 10px 0 14px; padding: 0; counter-reset: step; list-style: none; }
+  ol.steps li { position: relative; padding: 6px 0 6px 30px; font-size: 14px; color: var(--body); border-bottom: 1px dotted var(--paper-deep); }
+  ol.steps li:last-child { border-bottom: 0; }
+  ol.steps li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 6px; width: 19px; height: 19px; background: var(--rust); color: #fff; border-radius: 50%; font-size: 11px; font-weight: 600; display: grid; place-items: center; }
+  ol.steps li strong { color: var(--ink-2); }
+
+  ul.ticks { margin: 8px 0 14px; padding: 0; list-style: none; }
+  ul.ticks li { position: relative; padding: 4px 0 4px 22px; font-size: 14px; color: var(--body); }
+  ul.ticks li::before { content: "›"; position: absolute; left: 4px; color: var(--rust); font-weight: 700; }
+
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+  .pill.green { background: #e3ecd9; color: var(--forest); }
+  .pill.amber { background: #f5e6c9; color: #8a5a1e; }
+  .pill.red { background: #f3d9d2; color: var(--pc-pickle); }
+  .pill.blue { background: #d9e4ec; color: #1e4a6a; }
+
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .role { border: 1px solid var(--paper-deep); border-radius: 8px; padding: 16px 18px; background: var(--paper-soft); }
+  .role h3 { margin-bottom: 8px; }
+  .role .who { font-size: 12px; color: var(--rust); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+
+  table.matrix { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  table.matrix th, table.matrix td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--paper-deep); }
+  table.matrix th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--body-soft); font-weight: 600; }
+  table.matrix td.c { text-align: center; }
+  .yes { color: var(--forest); font-weight: 700; }
+  .no { color: #b9b2a2; }
+
+  .foot-note { font-size: 11.5px; color: var(--body-soft); margin-top: 8px; }
+  .pagenum { position: absolute; bottom: 12mm; right: 20mm; font-size: 11px; color: var(--body-soft); }
+  .pagenum::before { content: "ON Food ERP · "; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  @media print {
+    html, body { background: #fff; }
+    .page { margin: 0; box-shadow: none; width: auto; min-height: auto; }
+    .noprint { display: none !important; }
+  }
+  .toolbar { position: fixed; top: 14px; right: 14px; z-index: 50; }
+  .toolbar button { font-family: var(--body-font); font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="toolbar noprint"><button onclick="window.print()">Save as PDF ↗</button></div>
+
+<!-- ============ COVER ============ -->
+<section class="page cover">
+  <div class="cover-top">
+    <div class="mark">ON</div>
+    <div>
+      <div style="font-family:var(--display); font-size:18px; color:var(--ink);">ON Food</div>
+      <div style="font-size:12px; color:var(--body-soft); letter-spacing:.04em;">Organic Nutritious Food · Kalaburagi</div>
+    </div>
+  </div>
+
+  <div class="cover-mid">
+    <p class="eyebrow">A guide for the team</p>
+    <h1>How our <em>ERP</em> works,<br>section by section.</h1>
+    <p class="sub">This is the system we use to track everything — from the grain we buy, to the roti we make, to the bill we send and the money we collect. This guide walks through each screen, what it is for, and how the work flows from one to the next.</p>
+  </div>
+
+  <div class="cover-foot">
+    Prepared for <strong>our partners &amp; supervisors</strong> &nbsp;·&nbsp; Read top to bottom — it follows the real order of work.<br>
+    Covers: Login &amp; roles · Overview · Inventory · Batches · Products · Sales &amp; invoices · Payments · Credit ledger · Partners · Reports.
+  </div>
+</section>
+
+<!-- ============ THE FLOW ============ -->
+<section class="page">
+  <p class="eyebrow">The big picture</p>
+  <h2>One simple flow, start to finish</h2>
+  <p class="lead">Everything in the tool follows the way the business actually runs. Raw material comes in, becomes a product, gets sold, and the money is tracked. Five steps:</p>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-badge">1</div>
+      <div class="flow-body"><h3>Buy raw material → <span class="it">Inventory</span></h3><p>We record the grain (or makhana, mango, chilli) we purchase — quantity, cost, and transport. This is our stock on hand.</p></div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">
+      <div class="flow-badge">2</div>
+      <div class="flow-body"><h3>Make the product → <span class="it">Batches</span></h3><p>We take some raw material, send it for grinding, prepare the product, and record it as a batch. The raw material is automatically reduced from stock.</p></div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">
+      <div class="flow-badge">3</div>
+      <div class="flow-body"><h3>Ready to sell → <span class="it">Products</span></h3><p>Whatever we produce appears here as finished goods, with how many we have and what each one cost us to make.</p></div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">
+      <div class="flow-badge">4</div>
+      <div class="flow-body"><h3>Sell it → <span class="it">Sales &amp; invoices</span></h3><p>We make a GST bill for the customer. Stock is reduced by what we sell. The bill can be saved as a PDF for our records.</p></div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-step">
+      <div class="flow-badge">5</div>
+      <div class="flow-body"><h3>Collect money → <span class="it">Payments &amp; credit ledger</span></h3><p>When the customer pays — now or after a week — we record it. The ledger always shows who still owes us, and how much.</p></div>
+    </div>
+  </div>
+
+  <div class="card dark">
+    <p class="eyebrow">Why it matters</p>
+    <p>Because each step feeds the next, the numbers are always honest. You can never sell more than you made, the money owed is always correct, and at month-end everything needed for <strong>GST filing</strong> is already in one place.</p>
+  </div>
+  <div class="pagenum">The flow</div>
+</section>
+
+<!-- ============ LOGIN & ROLES ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">01</span> &nbsp; Getting in</p>
+  <h2>Login &amp; who sees what</h2>
+  <p>Everyone has their own email and password. Nobody can open the tool without signing in, and what each person sees depends on their role.</p>
+
+  <div class="role-grid">
+    <div class="role">
+      <div class="who">Admin</div>
+      <h3>Founders</h3>
+      <p style="font-size:13.5px;">See <strong>everything</strong> — money, customers, prices, and production. This is for the owners.</p>
+    </div>
+    <div class="role">
+      <div class="who">Supervisor</div>
+      <h3>Kitchen / production</h3>
+      <p style="font-size:13.5px;">See only <strong>production</strong> — inventory, batches, and products. Customer names, prices, and money stay private.</p>
+    </div>
+  </div>
+
+  <table class="matrix">
+    <thead><tr><th>Screen</th><th class="c">Admin</th><th class="c">Supervisor</th></tr></thead>
+    <tbody>
+      <tr><td>Overview</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Inventory</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Products</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Batches</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+      <tr><td>Sales &amp; invoices</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+      <tr><td>Partners</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+      <tr><td>Credit ledger</td><td class="c yes">✓</td><td class="c no">—</td></tr>
+    </tbody>
+  </table>
+  <p class="foot-note">To sign out, use the button at the bottom-left, next to your name.</p>
+  <div class="pagenum">Login &amp; roles</div>
+</section>
+
+<!-- ============ OVERVIEW ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">02</span> &nbsp; The home screen</p>
+  <h2>Overview</h2>
+  <p class="lead">The first screen after login. A quick health check of the business — no data entry here, just the live picture.</p>
+
+  <h3>What it shows</h3>
+  <ul class="ticks">
+    <li><strong>Billed</strong> — total value of all invoices raised.</li>
+    <li><strong>Collected</strong> — money actually received.</li>
+    <li><strong>Outstanding</strong> — money still to come in.</li>
+    <li><strong>Overdue</strong> — bills past their due date, not yet paid.</li>
+    <li><strong>Production snapshot</strong> — raw materials, inventory value, batches made, and units produced.</li>
+    <li><strong>Products by units produced</strong> — what we've made the most of.</li>
+  </ul>
+
+  <div class="card">
+    <p style="margin:0;"><strong>Download report</strong> — the button at the top right exports the whole business to an Excel file (one tab each for Inventory, Batches, Products, Partners, plus a Summary). Useful for the accountant or a monthly review.</p>
+  </div>
+  <div class="pagenum">Overview</div>
+</section>
+
+<!-- ============ INVENTORY ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">03</span> &nbsp; Step one of the flow</p>
+  <h2>Inventory — the raw material we buy</h2>
+  <p>Every time we purchase grain, makhana, mango, or chilli, we record it here. This is our <strong>stock on hand</strong> — the starting point for everything we make.</p>
+
+  <h3>To add raw material</h3>
+  <ol class="steps">
+    <li>Click <strong>Add raw material</strong>.</li>
+    <li>Enter the <strong>name</strong> (e.g. Juwar Grain), the <strong>vendor</strong>, and the <strong>month of purchase</strong>.</li>
+    <li>Enter the <strong>quantity</strong> (in kg), the <strong>cost per kg</strong>, and the <strong>transport cost per kg</strong>.</li>
+    <li>Save. It now shows in the list with <strong>stock left</strong>.</li>
+  </ol>
+
+  <ul class="ticks">
+    <li><strong>Stock left</strong> automatically goes down as you use the material to make batches.</li>
+    <li>The tool will <strong>stop you</strong> from making a batch bigger than the stock you have.</li>
+  </ul>
+  <div class="pagenum">Inventory</div>
+</section>
+
+<!-- ============ BATCHES ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">04</span> &nbsp; Step two of the flow</p>
+  <h2>Batches — turning material into product</h2>
+  <p>A batch is one round of production: take some raw material, process it, and record what came out. This is where cost is calculated and product is created.</p>
+
+  <h3>To make a batch</h3>
+  <ol class="steps">
+    <li>Click <strong>New batch</strong>.</li>
+    <li>Pick the <strong>raw material</strong> from inventory (only what you have in stock appears).</li>
+    <li>Choose the <strong>product</strong> to make, or type a new product name (e.g. Juwar Roti).</li>
+    <li>Enter how much raw material you're using (e.g. 50 kg) — it warns you if you exceed stock.</li>
+    <li>Enter <strong>how many products per kg</strong> (e.g. 25 roti per kg → 50 kg makes 1,250).</li>
+    <li>Enter the <strong>grinding/flour cost per kg</strong> and any <strong>miscellaneous cost</strong> (labour, packaging).</li>
+    <li>Give it a <strong>batch number</strong>, set the status, and Save.</li>
+  </ol>
+
+  <div class="card">
+    <p style="margin:0;">The tool then works out the <strong>total output</strong>, the <strong>cost per piece</strong>, and the <strong>total batch cost</strong> — and reduces the raw material from inventory. The new product appears in <span class="it">Products</span>, ready to sell.</p>
+  </div>
+  <ul class="ticks">
+    <li>Made a mistake? Each batch has an <strong>edit</strong> (pencil) and <strong>delete</strong> button. Editing recalculates stock correctly; deleting returns the material to inventory.</li>
+  </ul>
+  <div class="pagenum">Batches</div>
+</section>
+
+<!-- ============ PRODUCTS ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">05</span> &nbsp; Step three of the flow</p>
+  <h2>Products — what's ready to sell</h2>
+  <p>This screen is built automatically from your batches. It's the finished-goods shelf: what we have, and what it cost us.</p>
+
+  <h3>Each product shows</h3>
+  <ul class="ticks">
+    <li><strong>Produced</strong> — total made across all batches.</li>
+    <li><strong>Sold</strong> — total sold through invoices.</li>
+    <li><strong>In stock</strong> — what's left (Produced minus Sold).</li>
+    <li><strong>Cost per unit</strong> — what each piece cost us to make.</li>
+    <li><strong>Status</strong> — <span class="pill green">Ready</span> or <span class="pill amber">Out of stock</span>.</li>
+  </ul>
+
+  <div class="card">
+    <p style="margin:0;">There is <strong>no selling price here on purpose</strong>. Prices differ — a wholesaler pays less, a small shop pays a little more. So the price is set freshly on each <span class="it">invoice</span>, per customer.</p>
+  </div>
+  <div class="pagenum">Products</div>
+</section>
+
+<!-- ============ SALES ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">06</span> &nbsp; Step four of the flow</p>
+  <h2>Sales &amp; invoices</h2>
+  <p>This is where we bill a customer. The list shows every invoice and its collection status; <strong>New sale</strong> creates a proper GST tax invoice.</p>
+
+  <h3>To raise an invoice</h3>
+  <ol class="steps">
+    <li>Click <strong>New sale</strong>.</li>
+    <li>Pick the <strong>customer</strong> (from Partners). Their GST number, if saved, prints on the bill.</li>
+    <li>Add a product line: choose the product, set <strong>pieces per pack</strong>, <strong>quantity</strong>, and the <strong>price per piece</strong>.</li>
+    <li>Check the totals and GST (split as CGST+SGST within Karnataka, or IGST outside).</li>
+    <li>Set the <strong>due date</strong> — today, or a week / 10 / 15 days later if it's on credit.</li>
+    <li>Click <strong>Issue invoice</strong>.</li>
+  </ol>
+
+  <ul class="ticks">
+    <li>You <strong>cannot</strong> sell more than you have in stock — the line turns red and the button locks.</li>
+    <li>You <strong>cannot</strong> issue a ₹0 invoice — a price must be set on every line.</li>
+    <li>Each issued bill gets a unique number (INV-2026-XXX) and opens a <strong>PDF to save</strong> — named by the bill number, ready for GST filing.</li>
+  </ul>
+  <div class="pagenum">Sales &amp; invoices</div>
+</section>
+
+<!-- ============ PAYMENTS ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">07</span> &nbsp; Step five of the flow</p>
+  <h2>Recording payments</h2>
+  <p>A customer may pay straight away, or after some days. Whenever the money comes in — fully or in parts — we record it against their invoice.</p>
+
+  <h3>To record a payment</h3>
+  <ol class="steps">
+    <li>Go to <strong>Sales</strong>, find the invoice with a balance.</li>
+    <li>Click <strong>Record payment</strong>.</li>
+    <li>Enter the <strong>amount received</strong> (use "Full balance" or "Half" for quickness).</li>
+    <li>Choose the <strong>method</strong> — Cash, UPI, Bank, Cheque — and the <strong>date</strong>.</li>
+    <li>Save.</li>
+  </ol>
+
+  <div class="card">
+    <p style="margin:0;">The invoice updates instantly: <span class="pill green">Paid</span> if fully settled, <span class="pill amber">Partial</span> if part-paid. If a due date passes with money still owed, it shows <span class="pill red">Overdue</span> on its own — no need to track it by hand.</p>
+  </div>
+  <div class="pagenum">Payments</div>
+</section>
+
+<!-- ============ CREDIT LEDGER ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">08</span> &nbsp; The money view</p>
+  <h2>Credit ledger — who owes us</h2>
+  <p>The complete record of money. Every invoice and its payment are clubbed into <strong>one clear line</strong> so you can see, at a glance, what's settled and what's still due.</p>
+
+  <h3>Each line shows</h3>
+  <ul class="ticks">
+    <li><strong>Sale</strong> — the invoice amount.</li>
+    <li><strong>Paid</strong> — how much has been collected.</li>
+    <li><strong>Balance</strong> — what's still owed.</li>
+    <li><strong>Status</strong> — Paid, Partial, or Open.</li>
+  </ul>
+  <p>The top shows totals — <strong>Sales on credit</strong>, <strong>Collected</strong>, and <strong>Outstanding</strong>. The right panel lists partners who still owe money, <strong>oldest first</strong>, so you know who to follow up with.</p>
+  <div class="pagenum">Credit ledger</div>
+</section>
+
+<!-- ============ PARTNERS ============ -->
+<section class="page">
+  <p class="eyebrow"><span class="sec-no">09</span> &nbsp; The address book</p>
+  <h2>Partners</h2>
+  <p>Everyone we deal with, in four groups. Adding them once means they're ready to pick whenever you make a batch or a bill.</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Supplier</h3>
+      <p style="font-size:13.5px;">Who we buy raw material from (grain, makhana, mango, chilli).</p>
+      <h3>Grinding mill</h3>
+      <p style="font-size:13.5px;">Outsourced grinding. We can keep several and choose between them.</p>
+    </div>
+    <div>
+      <h3>Customer</h3>
+      <p style="font-size:13.5px;">Small shops &amp; kirana stores we sell to. Can carry a GST number.</p>
+      <h3>Wholesaler</h3>
+      <p style="font-size:13.5px;">Bulk buyers. Also billable with GST.</p>
+    </div>
+  </div>
+
+  <ul class="ticks">
+    <li>Add a partner with <strong>New partner</strong>; pick the role, name, phone, location.</li>
+    <li>For Customers &amp; Wholesalers you can add a <strong>GSTIN</strong> — it prints on their invoices. Leave it blank and no GST line appears.</li>
+  </ul>
+  <div class="pagenum">Partners</div>
+</section>
+
+<!-- ============ DAILY ROUTINE ============ -->
+<section class="page">
+  <p class="eyebrow">Putting it together</p>
+  <h2>A normal week, in order</h2>
+  <p class="lead">If you ever forget where to start, follow this.</p>
+
+  <div class="flow">
+    <div class="flow-step"><div class="flow-badge">1</div><div class="flow-body"><h3>Material arrives</h3><p>Add it under <span class="it">Inventory</span> with cost and transport.</p></div></div>
+    <div class="flow-step"><div class="flow-badge">2</div><div class="flow-body"><h3>We produce</h3><p>Record a <span class="it">Batch</span> — stock drops, product is created, cost is worked out.</p></div></div>
+    <div class="flow-step"><div class="flow-badge">3</div><div class="flow-body"><h3>An order comes</h3><p>Raise a <span class="it">New sale</span> — set the price for that customer, issue the bill, save the PDF.</p></div></div>
+    <div class="flow-step"><div class="flow-badge">4</div><div class="flow-body"><h3>Money is received</h3><p><span class="it">Record payment</span> against the invoice — now or whenever it comes.</p></div></div>
+    <div class="flow-step"><div class="flow-badge">5</div><div class="flow-body"><h3>End of month</h3><p>Open <span class="it">Credit ledger</span> to chase dues, and <span class="it">Download report</span> for the accountant.</p></div></div>
+  </div>
+
+  <hr class="divider" />
+  <div class="card dark">
+    <p class="eyebrow">One rule to remember</p>
+    <p style="margin:0; font-family:var(--display); font-size:22px; line-height:1.35;">Record the work <span style="color:var(--pc-wheat); font-style:italic;">as it happens</span> — material in, batch made, bill out, money in. Do that, and the books take care of themselves.</p>
+  </div>
+  <div class="pagenum">Daily routine</div>
+</section>
+
+</body>
+</html>
