@@ -8,6 +8,17 @@ run twice.
 | 1 | `schema.sql` *(existing)* | Partners, inventory, batches, invoices, payments |
 | 2 | `profiles-and-roles.sql` *(existing)* | Logins and the `admin` / `supervisor` roles |
 | 3 | `02-orders-and-sales.sql` | Enquiries, orders, B2B customer fields, the `salesperson` role, and the access rules |
+| 4 | `03-invoice-on-delivery.sql` | Raises the tax invoice when an order is delivered, and queues it to the customer's mobile |
+
+Then set your own business details, which the invoice needs:
+
+```sql
+update app_settings set value = '29XXXXXXXXXXXZX' where key = 'gstin';
+update app_settings set value = 'Karnataka'       where key = 'home_state';
+```
+
+`home_state` is what decides CGST+SGST versus IGST on every invoice, so
+it must be right.
 
 After step 3, create the salesperson's login in **Authentication → Users**, then:
 
@@ -87,6 +98,31 @@ from pg_policies order by tablename, policyname;
 ```
 
 ---
+
+## What happens when an order is delivered
+
+Marking `fulfilment_status = 'delivered'` fires a trigger that:
+
+1. Refuses if the order has no items — you cannot invoice an empty delivery.
+2. Picks **CGST+SGST** if the customer's state matches `home_state`,
+   **IGST** if not.
+3. Totals each line separately, since GST rate can differ per product.
+4. Takes the next invoice number from the locked counter.
+5. Sets `due_date` from the customer's `credit_days`.
+6. Queues the invoice to their mobile in the `outbox` table.
+
+Calling it twice returns the same invoice. A double tap on a phone, or a
+retried webhook, cannot invoice one delivery twice.
+
+### The outbox
+
+The database never calls WhatsApp directly — an HTTP request inside a
+transaction can hold a lock open while a slow API times out. Invoices are
+queued in `outbox` and an Edge Function drains it.
+
+This is also what makes failure visible. A customer with no usable mobile
+number gets an `outbox` row with status `failed` and the reason, instead
+of an invoice that silently never arrives.
 
 ## Verifying a change
 

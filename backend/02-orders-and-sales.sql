@@ -241,10 +241,15 @@ $$;
 
 -- Seed the invoice counter from whatever numbers already exist, so the
 -- sequence continues rather than restarting at 1.
+--
+-- Only the trailing digits count. Stripping every non-digit from
+-- "INV-2026-007" would give 2026007, and the next invoice would be
+-- numbered INV-2026-2026008.
 insert into doc_counters (doc_type, fy, last_no)
 select 'invoice', fy_of(),
-       coalesce(max(nullif(regexp_replace(invoice_no, '\D', '', 'g'), '')::integer), 0)
+       coalesce(max(((regexp_match(invoice_no, '(\d+)\s*$'))[1])::integer), 0)
   from invoices
+ where invoice_no ~ '\d+\s*$'
 on conflict (doc_type, fy) do nothing;
 
 create or replace function set_order_no()
