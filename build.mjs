@@ -35,15 +35,54 @@ const APP  = path.join(import.meta.dirname, 'app');
 const DIST = path.join(APP, 'dist');
 const SRC  = path.join(APP, 'ERP Preview.html');
 
+// `eager: false` means the file is copied into vendor/ but not linked from
+// the page — something loads it on demand instead.
 const VENDOR = [
-  ['react/umd/react.production.min.js',                    'react.js'],
-  ['react-dom/umd/react-dom.production.min.js',            'react-dom.js'],
-  ['@supabase/supabase-js/dist/umd/supabase.js',           'supabase.js'],
+  ['react/umd/react.production.min.js',                    'react.js',        true],
+  ['react-dom/umd/react-dom.production.min.js',            'react-dom.js',    true],
+  ['@supabase/supabase-js/dist/umd/supabase.js',           'supabase.js',     true],
   // The Supabase UMD build is code-split and loads this chunk at runtime,
   // so it has to sit beside the main file or the client never appears.
-  ['@supabase/supabase-js/dist/umd/591.supabase.js',       '591.supabase.js'],
-  ['xlsx/dist/xlsx.full.min.js',                           'xlsx.js'],
+  ['@supabase/supabase-js/dist/umd/591.supabase.js',       '591.supabase.js', false],
+  // 861 KB, and only needed when somebody exports a spreadsheet. Fetched
+  // on first use by the shim below rather than by every page load.
+  ['xlsx/dist/xlsx.full.min.js',                           'xlsx.js',         false],
 ];
+
+// Loads vendor/xlsx.js the first time an export is asked for, then calls
+// through to the real exporter. ERPExport already refuses politely when
+// XLSX is missing, so nothing downstream needed changing.
+const LAZY_XLSX = `
+// ---------- lazy loader for the spreadsheet library ----------
+(function () {
+  var pending = null;
+  function loadXLSX() {
+    if (typeof XLSX !== 'undefined') return Promise.resolve();
+    if (pending) return pending;                 // a second click waits, it does not fetch again
+    pending = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'vendor/xlsx.js';
+      s.onload = resolve;
+      s.onerror = function () { pending = null; reject(new Error('could not be downloaded')); };
+      document.head.appendChild(s);
+    });
+    return pending;
+  }
+  var real = window.ERPExport;
+  if (!real) return;
+  var wrapped = {};
+  Object.keys(real).forEach(function (k) {
+    if (typeof real[k] !== 'function') { wrapped[k] = real[k]; return; }
+    wrapped[k] = function () {
+      var args = arguments;
+      return loadXLSX()
+        .then(function () { return real[k].apply(real, args); })
+        .catch(function (e) { window.alert('The export library ' + e.message + '. Check your connection and try again.'); });
+    };
+  });
+  window.ERPExport = wrapped;
+})();
+`;
 
 const ASSETS = ['styles.css'];
 
@@ -94,7 +133,9 @@ async function build() {
   }
 
   // Joined, not bundled — see the note at the top of this file.
-  const appJs = `(function () {\n'use strict';\n${parts.join('\n')}\n})();\n`;
+  // The lazy loader goes last: it wraps window.ERPExport, so it has to run
+  // after proposed-export.jsx has defined it.
+  const appJs = `(function () {\n'use strict';\n${parts.join('\n')}\n${LAZY_XLSX}\n})();\n`;
 
   await rm(DIST, { recursive: true, force: true });
   await mkdir(path.join(DIST, 'vendor'), { recursive: true });
@@ -140,7 +181,7 @@ async function build() {
 
   const vendorTags = [
     '  <!-- Compiled by build.mjs — do not edit app/dist by hand. -->',
-    ...VENDOR.filter(([, to]) => to !== '591.supabase.js')
+    ...VENDOR.filter(([, , eager]) => eager)
              .map(([, to]) => `  <script src="vendor/${to}"></script>`),
   ].join('\n') + '\n';
 

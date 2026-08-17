@@ -76,9 +76,14 @@ like-for-like, both served from localhost with the same data:
 
 | | Source | Built |
 |---|---|---|
-| Time to render | 2,448 ms | **256 ms** |
-| Requests | 15 | 12 |
-| Transferred | 5.17 MB | **1.28 MB** |
+| Time to render | 2,564 ms | **196 ms** |
+| Requests | 15 | 11 |
+| Transferred | 5.17 MB | **0.44 MB** |
+
+The spreadsheet library is 861 KB and nothing touches it until somebody
+exports a report, so it is fetched on first use rather than on every page
+load. That accounts for most of the difference in transfer size. Exporting
+behaves exactly as it did before.
 
 Nothing in `app/` is modified by the build, and no application code
 changed to achieve this — same JSX, same screens, same logic.
