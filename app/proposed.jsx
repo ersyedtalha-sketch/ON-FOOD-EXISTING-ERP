@@ -2,20 +2,24 @@
 
 const ProSidebar = ({ active }) => {
   // Pull live counts from the shared store (falls back to defaults outside a provider)
-  let store = { state: { inventory: [], batches: [] } };
+  let store = { state: { inventory: [], batches: [], orders: [] } };
   try { store = useAppState(); } catch (e) { /* no provider */ }
   const invCount = store.state.inventory.length;
   const batchCount = store.state.batches.length;
+  const openOrders = (store.state.orders || []).filter(
+    (o) => o.status !== 'delivered' && o.status !== 'cancelled'
+  ).length;
 
   const sec1All = [
     { label: 'Overview',      icon: 'Dashboard', href: '/dashboard',           count: null,                                   roles: ['admin','supervisor'] },
     { label: 'Inventory',     icon: 'Box',       href: '/dashboard/inventory', count: invCount ? String(invCount) : null,     roles: ['admin','supervisor'] },
     { label: 'Products',      icon: 'Rupee',     href: '/dashboard/costs',     count: null,                                   roles: ['admin','supervisor'] },
     { label: 'Batches',       icon: 'Package',   href: '/dashboard/batches',   count: batchCount ? String(batchCount) : null, roles: ['admin','supervisor'] },
+    { label: 'Orders',        icon: 'Package',   href: '/dashboard/orders',    count: openOrders ? String(openOrders) : null, roles: ['admin','supervisor','salesperson'] },
     { label: 'Sales',         icon: 'Receipt',   href: '/dashboard/sales',     count: null,                                   roles: ['admin'] },
   ];
   const sec2All = [
-    { label: 'Partners',      icon: 'Users',     href: '/dashboard/partners',  count: null, roles: ['admin'] },
+    { label: 'Partners',      icon: 'Users',     href: '/dashboard/partners',  count: null, roles: ['admin','salesperson'] },
     { label: 'Credit Ledger', icon: 'Card',      href: '/dashboard/credit',    count: null, roles: ['admin'] },
   ];
   const role = (typeof window !== 'undefined' && window.__erpRole) || 'admin';

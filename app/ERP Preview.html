@@ -40,6 +40,7 @@
   <script type="text/babel" src="proposed.jsx"></script>
   <script type="text/babel" src="proposed-costs.jsx"></script>
   <script type="text/babel" src="proposed-invoice.jsx"></script>
+  <script type="text/babel" src="proposed-orders.jsx"></script>
   <script type="text/babel" src="proposed-inventory.jsx"></script>
   <script type="text/babel" src="proposed-export.jsx"></script>
 </head>
@@ -61,6 +62,7 @@
       '/dashboard/inventory':      ProInventory,
       '/dashboard/costs':          ProCosts,
       '/dashboard/batches':        ProBatches,
+      '/dashboard/orders':         ProOrders,
       '/dashboard/sales':          ProSales,
       '/dashboard/sales/new':      ProNewInvoice,
       '/dashboard/partners':       ProPartners,
@@ -70,7 +72,12 @@
     // Which routes each role may open. Supervisor = operations only.
     const ROLE_ROUTES = {
       admin: Object.keys(ROUTES),
-      supervisor: ['/dashboard', '/dashboard/inventory', '/dashboard/costs', '/dashboard/batches'],
+      supervisor: ['/dashboard', '/dashboard/inventory', '/dashboard/costs', '/dashboard/batches', '/dashboard/orders'],
+      // Field sales: their own orders and the customer list, nothing else.
+      // This only hides screens — what actually stops a salesperson reading
+      // cost and margin data is row-level security, in
+      // backend/02-orders-and-sales.sql.
+      salesperson: ['/dashboard/orders', '/dashboard/partners'],
     };
 
     const initials = (s) => (s || '?').split(/[\s@.]+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
@@ -179,6 +186,7 @@
               'inventory':     '/dashboard/inventory',
               'products':      '/dashboard/costs',
               'batches':       '/dashboard/batches',
+              'orders':        '/dashboard/orders',
               'sales':         '/dashboard/sales',
               'partners':      '/dashboard/partners',
               'credit ledger': '/dashboard/credit',

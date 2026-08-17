@@ -163,6 +163,7 @@ const initialAppState = {
   inventory: initialInventory,
   partners: initialPartners,
   batches: [],          // empty — user adds batches
+  orders: [],           // empty — created from the Orders screen
   recipes: {},          // empty — products are created when batches are produced
   // counter for auto-generated batch numbers if user wants
   batchSeq: 14,
@@ -251,16 +252,51 @@ const batchToRow = (b) => ({
   status: b.s || 'progress', notes: b.notes || null,
 });
 
+// Orders — the middle step between an enquiry and an invoice. See
+// backend/02-orders-and-sales.sql. `slot` is the delivery window the
+// customer asked for; the run is ordered by it, so it is stored as
+// given rather than parsed.
+const rowToOrder = (r) => ({
+  id: r.id,
+  orderNo: r.order_no,
+  partnerId: r.partner_id,
+  source: r.source,
+  status: r.fulfilment_status,
+  requestedFor: r.requested_for,
+  slot: r.requested_slot,
+  notes: r.notes,
+  address: r.delivery_address,
+  invoiceId: r.invoice_id,
+  deliveredAt: r.delivered_at,
+  createdBy: r.created_by,
+  items: (r.order_items || []).map((i) => ({
+    id: i.id, name: i.product_name, hsn: i.hsn,
+    pcs: Number(i.pcs_per_pack) || 1, qty: Number(i.quantity) || 0,
+    rate: Number(i.rate_per_piece) || 0, gst: Number(i.gst_rate) || 5,
+  })),
+});
+
+const orderToRow = (o) => ({
+  partner_id: o.partnerId,
+  source: o.source || 'salesperson',
+  requested_for: o.requestedFor || null,
+  requested_slot: o.slot || null,
+  delivery_address: o.address || null,
+  notes: o.notes || null,
+});
+
 // Pull everything from the DB and rebuild state (stock + products are derived).
 async function loadAll(setState) {
   const sb = SB();
   if (!sb) return;
-  const [pRes, iRes, bRes] = await Promise.all([
+  const [pRes, iRes, bRes, oRes] = await Promise.all([
     sb.from('partners').select('*').order('created_at', { ascending: true }),
     sb.from('inventory').select('*').order('created_at', { ascending: false }),
     sb.from('batches').select('*').order('created_at', { ascending: false }),
+    sb.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
   ]);
-  [pRes, iRes, bRes].forEach((r) => { if (r.error) console.error('Supabase load error:', r.error.message); });
+  [pRes, iRes, bRes, oRes].forEach((r) => { if (r.error) console.error('Supabase load error:', r.error.message); });
+  const orders = (oRes.data || []).map(rowToOrder);
   const partners = (pRes.data || []).map(rowToPartner);
   const batches = (bRes.data || []).map(rowToBatch);
   let inventory = (iRes.data || []).map(rowToInv);
@@ -269,7 +305,7 @@ async function loadAll(setState) {
     const consumed = batches.filter((b) => b._invId === inv.id && b.s !== 'cancelled').reduce((s, b) => s + b.consumedQty, 0);
     return { ...inv, stockRemaining: inv.qty - consumed };
   });
-  setState((s) => ({ ...s, partners, inventory, batches, recipes: recomputeProducts(batches, s.recipes) }));
+  setState((s) => ({ ...s, partners, inventory, batches, orders, recipes: recomputeProducts(batches, s.recipes) }));
 }
 
 const reportError = (error, what) => { if (error) { console.error('Supabase ' + what + ':', error.message); alert('Could not save (' + what + '): ' + error.message); } };
@@ -277,7 +313,7 @@ const reportError = (error, what) => { if (error) { console.error('Supabase ' + 
 const AppStateProvider = ({ children }) => {
   const hasDB = !!SB();
   const [state, setState] = React.useState(
-    hasDB ? { inventory: [], partners: [], batches: [], recipes: {}, batchSeq: 14, loading: true } : initialAppState
+    hasDB ? { inventory: [], partners: [], batches: [], orders: [], recipes: {}, batchSeq: 14, loading: true } : initialAppState
   );
 
   React.useEffect(() => {
@@ -376,6 +412,25 @@ const AppStateProvider = ({ children }) => {
       return { ...s, batches, inventory, recipes: recomputeProducts(batches, s.recipes) };
     }),
     updateProduct: (id, patch) => setState((s) => ({ ...s, recipes: { ...s.recipes, [id]: { ...s.recipes[id], ...patch } } })),
+    createOrder: (order) => setState((s) => ({
+      ...s,
+      orders: [{
+        ...order,
+        id: 'ord-' + Date.now(),
+        orderNo: 'ORD-' + new Date().getFullYear() + '-' + String(s.orders.length + 1).padStart(4, '0'),
+        status: 'pending',
+        invoiceId: null,
+        deliveredAt: null,
+      }, ...s.orders],
+    })),
+    // Mirrors orders_invoice_trg: delivering is what raises the invoice,
+    // and delivering twice must not raise a second one.
+    markDelivered: (id) => setState((s) => ({
+      ...s,
+      orders: s.orders.map((o) => (o.id === id && o.status !== 'delivered'
+        ? { ...o, status: 'delivered', deliveredAt: new Date().toISOString() }
+        : o)),
+    })),
     };
 
     if (!hasDB) return memActions;
@@ -389,6 +444,31 @@ const AppStateProvider = ({ children }) => {
       addBatch: async (batch, consumed) => { const { error } = await SB().from('batches').insert(batchToRow({ ...batch, _invId: consumed.inventoryId })); reportError(error, 'add batch'); await loadAll(setState); },
       updateBatch: async (batchNo, newBatch, consumed) => { const { error } = await SB().from('batches').update(batchToRow({ ...newBatch, _invId: consumed.inventoryId })).eq('batch_no', batchNo); reportError(error, 'update batch'); await loadAll(setState); },
       deleteBatch: async (batchNo) => { const { error } = await SB().from('batches').delete().eq('batch_no', batchNo); reportError(error, 'delete batch'); await loadAll(setState); },
+      createOrder: async (order) => {
+        const sb = SB();
+        const { data, error } = await sb.from('orders').insert(orderToRow(order)).select('id').single();
+        if (error) { reportError(error, 'create order'); return; }
+        const items = (order.items || []).map((i) => ({
+          order_id: data.id, product_name: i.name, hsn: i.hsn || null,
+          pcs_per_pack: i.pcs, quantity: i.qty, rate_per_piece: i.rate, gst_rate: i.gst,
+          taxable_value: Math.round(i.pcs * i.qty * i.rate * 100) / 100,
+        }));
+        if (items.length) {
+          const { error: e2 } = await sb.from('order_items').insert(items);
+          reportError(e2, 'add order items');
+        }
+        await loadAll(setState);
+      },
+      // The database raises the invoice and consumes stock off the back of
+      // this update. If stock is short it refuses, and the message from
+      // allocate_fefo() is what the user needs to see.
+      markDelivered: async (id) => {
+        const { error } = await SB().from('orders')
+          .update({ fulfilment_status: 'delivered', delivered_at: new Date().toISOString() })
+          .eq('id', id);
+        reportError(error, 'mark delivered');
+        await loadAll(setState);
+      },
       // Products are derived from batches in DB mode — these stay no-ops.
       updateProduct: () => {}, updateRecipe: () => {}, addRecipe: () => {}, createProduct: () => {}, deleteRecipe: () => {},
     };
@@ -426,6 +506,14 @@ const findInventoryForInput = (inventory, inputName) => {
     i.name.toLowerCase().includes(needle) || needle.includes(i.name.toLowerCase())
   );
 };
+
+// The product catalogue. `state.recipes` only contains products that have
+// actually been produced, because it is derived from batches — so it is
+// empty on a fresh database and cannot be used to take an order in
+// advance. Orders are promises to deliver later; stock is checked when
+// they are delivered, not when they are placed. This exposes the catalogue
+// so an order can be taken before the batch exists.
+window.ERPCatalogue = initialRecipes;
 
 window.AppStateProvider = AppStateProvider;
 window.useAppState = useAppState;
