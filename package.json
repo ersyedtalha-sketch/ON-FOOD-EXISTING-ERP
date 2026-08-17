@@ -1,0 +1,21 @@
+{
+  "name": "onfood-erp",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ON FOOD ERP — build step that compiles the app ahead of time",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node build.mjs && npx --yes serve app/dist -l 5000"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@supabase/supabase-js": "2.45.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "xlsx": "0.18.5"
+  }
+}

@@ -48,3 +48,45 @@ minimum sizes, which lockup goes where — are in [`brand/logo/README.txt`](bran
 
 Scaffold Phase 0 — Postgres, migrations, auth, RBAC, the company/branch/warehouse tree
 and the item master. See §9 of the development plan.
+
+---
+
+## Running the app
+
+The source in `app/` still opens directly — `ERP Preview.html` in a
+browser, no build needed, exactly as before.
+
+For anything a real user touches, build it first:
+
+```bash
+npm install
+npm run build      # writes app/dist
+npx serve app/dist
+```
+
+### Why
+
+Loaded straight from source, the page fetches a 3 MB compiler and
+compiles ~4,800 lines of JSX in the browser **on every page load**, from
+six external hosts. If any of them is slow or blocked, the page is blank
+— not slow, blank.
+
+The build compiles once and bundles everything locally. Measured
+like-for-like, both served from localhost with the same data:
+
+| | Source | Built |
+|---|---|---|
+| Time to render | 2,448 ms | **256 ms** |
+| Requests | 15 | 12 |
+| Transferred | 5.17 MB | **1.28 MB** |
+
+Nothing in `app/` is modified by the build, and no application code
+changed to achieve this — same JSX, same screens, same logic.
+
+### Deploying
+
+Build command `npm run build`, publish directory `app/dist`. The built
+folder is self-contained: no CDN, no external fonts, nothing to reach
+except your own Supabase project.
+
+`app/dist` is not committed — it is generated.
