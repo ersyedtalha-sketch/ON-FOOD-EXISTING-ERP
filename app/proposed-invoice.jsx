@@ -33,7 +33,11 @@ const SELLER = {
 
 /* ---------- Helpers ---------- */
 
-const today = () => new Date(2026, 4, 28);   // May 28, 2026 — matches mock data
+// Was pinned to 28 May 2026 so the screen lined up with the mock data.
+// Every invoice raised took that date, which on a real tax invoice is
+// wrong and hard to correct after the fact — the issue date drives the
+// GST return period and the due date drives the credit terms.
+const today = () => new Date();
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const isoDate = (d) => d.toISOString().slice(0, 10);
 const dispDate = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
